@@ -40,8 +40,6 @@
 (add-to-list 'default-frame-alist
               '(font . "Fantasque Sans Mono-16:weight=bold"))
 
-
-
 ;;; 主题和透明度设置
 ;; ;; 安装 zenburn-theme（如果尚未安装）
 ;; (unless (package-installed-p 'zenburn-theme)

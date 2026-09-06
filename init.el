@@ -37,8 +37,6 @@
             (delete-other-windows))) ; 保证只有一个窗口显示 scratch
 
 ;;; 设置字体
-;; (add-to-list 'default-frame-alist
-;;              '(font . "FantasqueSansM Nerd Font-16:weight=bold"))
 (add-to-list 'default-frame-alist
               '(font . "Fantasque Sans Mono-16:weight=bold"))
 

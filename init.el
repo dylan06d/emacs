@@ -215,4 +215,4 @@
 (load-file (expand-file-name "keybinds.el" user-emacs-directory))
 
 ;;; 设置补全
-;(load-file (expand-file-name "lspmod.el" user-emacs-directory))
+(load-file (expand-file-name "lspmode.el" user-emacs-directory))

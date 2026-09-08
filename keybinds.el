@@ -13,6 +13,7 @@
   (interactive)
   (load-file (expand-file-name "init.el" user-emacs-directory))
   (load-file (expand-file-name "keybinds.el" user-emacs-directory))
+  (load-file (expand-file-name "lspmode.el" user-emacs-directory))
   (mapc #'enable-theme custom-enabled-themes)
   (message "✅ Configuration reloaded!"))
 

@@ -12,8 +12,12 @@
   "Reload init.el and keybinds.el."
   (interactive)
   (load-file (expand-file-name "init.el" user-emacs-directory))
-  (load-file (expand-file-name "keybinds.el" user-emacs-directory))
+  (load-file (expand-file-name "ui.el" user-emacs-directory))
+  (load-file (expand-file-name "code.el" user-emacs-directory))
+  (load-file (expand-file-name "corfu.el" user-emacs-directory))
   (load-file (expand-file-name "lspmode.el" user-emacs-directory))
+  (load-file (expand-file-name "magit.el" user-emacs-directory))
+  (load-file (expand-file-name "keybinds.el" user-emacs-directory))
   (mapc #'enable-theme custom-enabled-themes)
   (message "✅ Configuration reloaded!"))
 
@@ -41,6 +45,11 @@
           (buffer-list))))
 (global-set-key (kbd "C-c k") 'kill-other-buffers)
 
+;;; 窗口恢复
+(winner-mode 1)
+(global-set-key (kbd "C-c c") 'winner-undo)
+(global-set-key (kbd "C-c v") 'winner-redo)
+
 ;;; 更可靠的绑定方式（如果 windmove 不工作）
 (define-key winner-mode-map (kbd "C-c <left>") nil)
 (define-key winner-mode-map (kbd "C-c <right>") nil)
@@ -52,7 +61,7 @@
 ;;; 窗口交换
 (require 'windmove)
 
-;; 窗口交换函数
+;; 窗口交换交换函数
 (defun my-swap-windows (dir)
   "Swap current window with window in direction DIR."
   (let ((other-window (windmove-find-other-window dir)))
@@ -64,3 +73,24 @@
 (global-set-key (kbd "C-c w <right>") (lambda () (interactive) (my-swap-windows 'right)))
 (global-set-key (kbd "C-c w <up>")    (lambda () (interactive) (my-swap-windows 'up)))
 (global-set-key (kbd "C-c w <down>")  (lambda () (interactive) (my-swap-windows 'down)))
+
+;;; 跳转
+(global-set-key (kbd "C-a") 'back-to-indentation)
+
+;;; move-text
+(use-package move-text
+  :ensure t
+  :config
+  (global-set-key (kbd "M-<up>") 'move-text-up)
+  (global-set-key (kbd "M-<down>") 'move-text-down))
+
+;;; 创建新行
+(defun my-open-line ()
+  "在当前行上方插入一个空行，光标位置保持不变。"
+  (interactive)
+  (save-excursion
+    (beginning-of-line)
+    (open-line 1)
+    (indent-according-to-mode)))
+(global-set-key (kbd "C-S-<return>") 'my-open-line)
+(global-set-key (kbd "C-<return>") 'open-line)

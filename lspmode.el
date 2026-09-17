@@ -19,6 +19,31 @@
           "--background-index")))         ;; 后台建索引,不卡住编辑
 (setq lsp-auto-guess-root t)          ;; 自动猜测根目录,减少询问
 (setq lsp-keep-workspace-alive nil)   ;; 关闭 lsp 后不留孤立进程
+(setq lsp-headerline-breadcrumb-enable nil)
+(setq lsp-modeline-code-actions-enable nil)
+;; clangd 相关参数
+(setq lsp-clients-clangd-args
+      '("--header-insertion=never"
+        "--background-index"))
+;; zls 可执行文件路径,不在 PATH 里就写绝对路径
+(setq lsp-zig-zls-executable "zls")
+
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode
+  :config
+  (setq lsp-ui-sideline-enable t)          ;; 打开右侧提示栏
+  (setq lsp-ui-sideline-show-diagnostics t) ;; 显示错误/警告文字
+  (setq lsp-ui-sideline-show-hover nil)     ;; 不用它显示 hover 文档,避免太乱
+  (setq lsp-ui-sideline-delay 0.2))
+
+;;; zig-mode
+(use-package zig-mode
+  :ensure t
+  :hook (zig-mode . lsp-deferred)
+  :config
+  ;; zig-mode 自带保存时自动 zig fmt,如果你想用自己的格式化流程可以关掉
+  (setq zig-format-on-save nil))
 
 ;;; .clangd .clang-format
 (defun clangd-setup ()

@@ -14,6 +14,7 @@
   - [Orderless](https://github.com/oantolin/orderless) —— 无序模糊匹配
   - [Marginalia](https://github.com/minad/marginalia) —— 候选项附加说明信息
   - [Consult](https://github.com/minad/consult) —— 增强版查找 / 切换 / ripgrep 搜索
+  - [lsp-mod](https://github.com/emacs-lsp/lsp-mode) -- C/C++使用lsp-mod 
 - **主题**:默认加载 [doom-themes](https://github.com/doomemacs/themes) 的 `doom-acario-dark`,配置中也保留了切换到 `zenburn` 的注释示例(可自定义背景色)。
 - **窗口管理**:内置 `winner-mode`,支持撤销/重做窗口布局,以及自定义窗口交换快捷键。
 - **整洁的缓存目录**:备份文件、自动保存文件、锁文件、`custom.el`、`recentf`、`savehist` 等自动生成文件统一收纳到 `~/.emacs-bc/`,不污染项目和主目录。
@@ -85,6 +86,7 @@
 | `C-c h t` | `consult-find` |
 | `C-c h g g` | `consult-ripgrep`(需要安装 `ripgrep`) |
 | `C-c h r` | `consult-recentf`,最近打开的文件 |
+| `C-c C-d` | 可以生成.clangd和.clang-format
 
 ## 自定义主题
 

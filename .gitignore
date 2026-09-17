@@ -4,3 +4,4 @@ elpa
 .lsp-session-v1
 tramp
 transient
+.cache

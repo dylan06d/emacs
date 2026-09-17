@@ -1,3 +1,6 @@
+;;; ==========================
+;;; 代码基础设置
+
 ;;; 设置搜索有备选
 ;; 安装 vertico
 (unless (package-installed-p 'vertico)

@@ -1,3 +1,7 @@
+;;; ==========================
+;;; lsp
+
+
 ;;; lsp-mode
 (use-package lsp-mode
   :ensure t
@@ -16,27 +20,40 @@
   ;; clangd 相关参数
   (setq lsp-clients-clangd-args
         '("--header-insertion=never"      ;; 内核头文件组织特殊,别让它替你猜
-          "--background-index")))         ;; 后台建索引,不卡住编辑
+          "--background-index"))          ;; 后台建索引,不卡住编辑
+  ;; zls 可执行文件路径,不在 PATH 里就写绝对路径
+  (setq lsp-zig-zls-executable "zls"))
+ 
 (setq lsp-auto-guess-root t)          ;; 自动猜测根目录,减少询问
 (setq lsp-keep-workspace-alive nil)   ;; 关闭 lsp 后不留孤立进程
-(setq lsp-headerline-breadcrumb-enable nil)
-(setq lsp-modeline-code-actions-enable nil)
-;; clangd 相关参数
-(setq lsp-clients-clangd-args
-      '("--header-insertion=never"
-        "--background-index"))
-;; zls 可执行文件路径,不在 PATH 里就写绝对路径
-(setq lsp-zig-zls-executable "zls")
-
+ 
+;;; lsp-ui：错误说明 / 侧边提示
 (use-package lsp-ui
   :ensure t
   :commands lsp-ui-mode
   :config
-  (setq lsp-ui-sideline-enable t)          ;; 打开右侧提示栏
+  (setq lsp-ui-sideline-enable t)           ;; 打开右侧提示栏
   (setq lsp-ui-sideline-show-diagnostics t) ;; 显示错误/警告文字
   (setq lsp-ui-sideline-show-hover nil)     ;; 不用它显示 hover 文档,避免太乱
   (setq lsp-ui-sideline-delay 0.2))
-
+ 
+;;; flycheck：错误说明增强
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode)
+  :config
+  (setq flycheck-display-errors-delay 0.3))
+ 
+(use-package flycheck-pos-tip
+  :ensure t
+  :after flycheck
+  :config
+  (flycheck-pos-tip-mode))
+ 
+(global-set-key (kbd "C-c e") 'flycheck-list-errors)
+(global-set-key (kbd "M-n") 'flycheck-next-error)
+(global-set-key (kbd "M-p") 'flycheck-previous-error)
+ 
 ;;; zig-mode
 (use-package zig-mode
   :ensure t
@@ -44,7 +61,7 @@
   :config
   ;; zig-mode 自带保存时自动 zig fmt,如果你想用自己的格式化流程可以关掉
   (setq zig-format-on-save nil))
-
+ 
 ;;; .clangd .clang-format
 (defun clangd-setup ()
   "在当前目录生成两个独立文件:
@@ -88,9 +105,35 @@ ColumnLimit: 100
               (message "已取消,未修改:%s" file))
           (with-temp-file file (insert content))
           (message "✅ 已生成:%s" file))))))
-
+ 
 (global-set-key (kbd "C-c C-d") 'clangd-setup)
-
+ 
+;;; zls.json
+(defun zls-setup ()
+  "在当前目录生成 zls.json 配置模板。"
+  (interactive)
+  (let* ((root (expand-file-name default-directory))
+         (zls-file (expand-file-name "zls.json" root))
+         (zls-content
+          "{
+  \"enable_snippets\": true,
+  \"enable_argument_placeholders\": true,
+  \"warn_style\": false,
+  \"enable_semantic_tokens\": true,
+  \"enable_inlay_hints\": true
+}
+"))
+    (if (file-exists-p zls-file)
+        (if (yes-or-no-p (format "%s 已存在,是否覆盖? " zls-file))
+            (progn
+              (with-temp-file zls-file (insert zls-content))
+              (message "✅ 已覆盖写入:%s" zls-file))
+          (message "已取消,未修改:%s" zls-file))
+      (with-temp-file zls-file (insert zls-content))
+      (message "✅ 已生成:%s" zls-file))))
+ 
+(global-set-key (kbd "C-c C-z") 'zls-setup)
+ 
 ;;; .clang-format生效
 (defun my-c-sync-indent-from-clang-format ()
   "如果当前是 C/C++ mode 且项目里有 .clang-format,
@@ -113,5 +156,5 @@ ColumnLimit: 100
           (setq-local tab-width width)
           (setq-local standard-indent width)
           (message "✅ 缩进已同步为 %d(来自 %s)" width cf-file))))))
-
+ 
 (add-hook 'hack-local-variables-hook #'my-c-sync-indent-from-clang-format t)

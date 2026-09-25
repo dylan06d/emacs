@@ -19,6 +19,7 @@
   (load-file (expand-file-name "code.el" user-emacs-directory))
   (load-file (expand-file-name "corfu.el" user-emacs-directory))
   (load-file (expand-file-name "lspmode.el" user-emacs-directory))
+  (load-file (expand-file-name "langs.el" user-emacs-directory))
   (load-file (expand-file-name "magit.el" user-emacs-directory))
   (load-file (expand-file-name "keybinds.el" user-emacs-directory))
   (mapc #'enable-theme custom-enabled-themes)
@@ -97,3 +98,6 @@
     (indent-according-to-mode)))
 (global-set-key (kbd "C-S-<return>") 'my-open-line)
 (global-set-key (kbd "C-<return>") 'open-line)
+
+;;; lsp
+(global-set-key (kbd "C-c l r") 'lsp-restart)

@@ -14,7 +14,18 @@
   - [Orderless](https://github.com/oantolin/orderless) —— 无序模糊匹配
   - [Marginalia](https://github.com/minad/marginalia) —— 候选项附加说明信息
   - [Consult](https://github.com/minad/consult) —— 增强版查找 / 切换 / ripgrep 搜索
-  - [lsp-mod](https://github.com/emacs-lsp/lsp-mode) -- C/C++使用lsp-mod 
+- **多语言 LSP 支持**(基于 [lsp-mode](https://github.com/emacs-lsp/lsp-mode) + [lsp-ui](https://github.com/emacs-lsp/lsp-ui) + [flycheck](https://github.com/flycheck/flycheck)):
+  - **C / C++** —— `clangd`,支持一键生成 `.clangd` / `.clang-format`
+  - **Rust** —— `rust-analyzer`(配合 [rust-mode](https://github.com/rust-lang/rust-mode) + [cargo.el](https://github.com/kwrooijen/cargo.el))
+  - **Go** —— `gopls`(配合 [go-mode](https://github.com/dominikh/go-mode.el),保存时自动 `goimports`/整理 import)
+  - **Python** —— `pyright` / `python-lsp-server`(`pylsp`),使用 Emacs 内置 `python-mode`
+  - **Java** —— [lsp-java](https://github.com/emacs-lsp/lsp-java),自动下载并管理 Eclipse JDT Language Server(`jdtls`)
+  - **JavaScript / TypeScript** —— `typescript-language-server`(配合内置 `js-mode` 与 [typescript-mode](https://github.com/emacs-typescript/typescript.el))
+  - **PHP** —— `intelephense` / `phpactor`(配合 [php-mode](https://github.com/emacs-php/php-mode))
+  - **HTML / CSS** —— `vscode-html-language-server` / `vscode-css-language-server`(使用内置 `mhtml-mode` / `css-mode`)
+  - **Make** —— 内置 `makefile-mode`,保留 Tab 缩进(Makefile 语法要求)
+  - **CMake** —— `cmake-language-server`(配合 [cmake-mode](https://github.com/emacs-mirror/cmake-mode) + `cmake-font-lock`)
+  - **Zig** —— `zls`(配合 [zig-mode](https://github.com/ziglang/zig-mode))
 - **主题**:默认加载 [doom-themes](https://github.com/doomemacs/themes) 的 `doom-acario-dark`,配置中也保留了切换到 `zenburn` 的注释示例(可自定义背景色)。
 - **窗口管理**:内置 `winner-mode`,支持撤销/重做窗口布局,以及自定义窗口交换快捷键。
 - **整洁的缓存目录**:备份文件、自动保存文件、锁文件、`custom.el`、`recentf`、`savehist` 等自动生成文件统一收纳到 `~/.emacs-bc/`,不污染项目和主目录。
@@ -38,6 +49,26 @@
 
 - 字体:配置默认使用 `Fantasque Sans Mono`(注释中也保留了 Nerd Font 版本的写法),请提前安装,或按需替换 `init.el` 中的 `default-frame-alist` 字体设置。
 
+### 语言服务器 / 工具链
+
+各语言的补全、跳转、诊断均由对应的语言服务器提供,`lsp-mode` 不会替你安装编译器 / 运行时本身,请按需提前装好:
+
+| 语言 | 语言服务器 | 安装方式(示例) |
+| --- | --- | --- |
+| C / C++ | `clangd` | `sudo apt install clangd` / `brew install llvm` |
+| Rust | `rust-analyzer` | `rustup component add rust-analyzer` |
+| Go | `gopls` | `go install golang.org/x/tools/gopls@latest` |
+| Python | `pyright` 或 `pylsp` | `npm i -g pyright` 或 `pip install python-lsp-server` |
+| Java | `jdtls`(Eclipse JDT LS) | 无需手动安装,首次打开 `.java` 文件时 `lsp-java` 会自动下载 |
+| JavaScript / TypeScript | `typescript-language-server` | `npm i -g typescript typescript-language-server` |
+| PHP | `intelephense` 或 `phpactor` | `npm i -g intelephense` |
+| HTML / CSS | `vscode-langservers-extracted` | `npm i -g vscode-langservers-extracted` |
+| CMake | `cmake-language-server` | `pip install cmake-language-server` |
+| Make | 无(纯语法/缩进支持,不接语言服务器) | —— |
+| Zig | `zls` | 参考 [zls 官方文档](https://github.com/zigtools/zls) 编译或下载,确保在 `PATH` 中 |
+
+安装完成后可执行 `M-x my/check-lang-tools` 快速检查 `rust-analyzer`/`gopls`/`pyright`/`pylsp`/`typescript-language-server`/`intelephense`/`vscode-html-language-server`/`cmake-language-server` 是否已在 `PATH` 中可用(该命令只做检测,不会自动安装)。
+
 ## 安装
 
 1. 备份现有配置(如果有的话):
@@ -52,16 +83,24 @@
    git clone https://github.com/dylan06d/emacs.git ~/.emacs.d
    ```
 
-3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult` 等),请保持网络畅通,耐心等待安装完成。
+3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
 
 ## 目录结构
 
 ```
 .
-├── init.el        # 主配置文件:UI、主题、补全、缩进、缓存目录等
-├── keybinds.el     # 自定义快捷键(由 init.el 末尾自动加载)
+├── init.el        # 入口文件:初始化 package.el / use-package,加载 lisp/ 目录下所有配置
+├── ui.el          # UI 设置:关闭菜单栏/工具栏/滚动条、主题、字体、ANSI 颜色
+├── code.el        # 编辑基础设置:补全样式、缓存目录、缩进风格、删除行为、行号
+├── corfu.el       # 补全栈:Corfu / Cape / Vertico / Orderless / Marginalia / Consult
+├── lspmode.el     # LSP 基础设置:lsp-mode / lsp-ui / flycheck,以及 C/C++、Zig 语言配置
+├── langs.el       # 多语言支持:Rust / Go / Python / Java 的 LSP 挂载与工具链
+├── magit.el       # Magit(Git 客户端)
+├── keybinds.el    # 自定义快捷键(含一键重载配置命令)
 └── .gitignore
 ```
+
+> 以上文件默认存放于 `~/.config/emacs/lisp/`,由 `init.el` 中的 `my-load-directory` 自动加载。
 
 ## 常用快捷键
 
@@ -87,6 +126,7 @@
 | `C-c h g g` | `consult-ripgrep`(需要安装 `ripgrep`) |
 | `C-c h r` | `consult-recentf`,最近打开的文件 |
 | `C-c C-d` | 可以生成.clangd和.clang-format
+| `M-x my/check-lang-tools` | 检查 Rust / Go / Python 语言服务器是否已在 PATH 中可用
 
 ## 自定义主题
 

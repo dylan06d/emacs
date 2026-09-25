@@ -158,3 +158,112 @@ ColumnLimit: 100
           (message "✅ 缩进已同步为 %d(来自 %s)" width cf-file))))))
  
 (add-hook 'hack-local-variables-hook #'my-c-sync-indent-from-clang-format t)
+
+;;; 多语言支持:Rust / Java / Python / Go
+
+;;; ---- Rust ----
+(use-package rust-mode
+  :ensure t
+  :hook (rust-mode . lsp-deferred)
+  :config
+  ;; 使用 rust-analyzer 作为语言服务器(需在 PATH 中可用)
+  (setq rust-mode-treat-dollar-as-punctuation t))
+
+;; cargo 命令集成(build / run / test 等)
+(use-package cargo
+  :ensure t
+  :hook (rust-mode . cargo-minor-mode))
+
+;;; ---- Python ----
+;; python-mode 为 Emacs 内置,这里只补充 lsp 挂载与保存时格式化
+(add-hook 'python-mode-hook #'lsp-deferred)
+
+;; lsp-mode 默认按 lsp-pyright > pylsp > pyls 顺序寻找已安装的服务器
+;; 如需更完整的类型检查体验,建议安装 lsp-pyright:
+;; (use-package lsp-pyright
+;;   :ensure t
+;;   :hook (python-mode . (lambda () (require 'lsp-pyright) (lsp-deferred))))
+
+;;; ---- Go ----
+(use-package go-mode
+  :ensure t
+  :hook (go-mode . lsp-deferred)
+  :config
+  ;; 保存时自动 goimports/gofmt 并整理 import
+  (add-hook 'before-save-hook #'lsp-format-buffer nil t)
+  (add-hook 'before-save-hook #'lsp-organize-imports nil t))
+
+;;; ---- Java ----
+(use-package lsp-java
+  :ensure t
+  :hook (java-mode . lsp-deferred)
+  :init
+  ;; 首次启动会自动下载 Eclipse JDT Language Server(jdtls)
+  (setq lsp-java-vmargs
+        '("-XX:+UseParallelGC"
+          "-XX:GCTimeRatio=4"
+          "-XX:AdaptiveSizePolicyWeight=90"
+          "-Dsun.zip.disableMemoryMapping=true"
+          "-Xmx1G"
+          "-Xms100m")))
+
+
+;;; ---- JavaScript / TypeScript ----
+;; 使用内置 js-mode 处理 .js,语言服务器为 typescript-language-server
+(add-hook 'js-mode-hook #'lsp-deferred)
+ 
+;; typescript-mode 提供 .ts / .tsx 语法支持
+(use-package typescript-mode
+  :ensure t
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+ 
+;;; ---- PHP ----
+(use-package php-mode
+  :ensure t
+  :hook (php-mode . lsp-deferred))
+ 
+;;; ---- HTML / CSS ----
+;; 内置 mhtml-mode / css-mode,语言服务器由 vscode-langservers-extracted 提供
+(add-hook 'mhtml-mode-hook #'lsp-deferred)
+(add-hook 'css-mode-hook #'lsp-deferred)
+ 
+;;; ---- Make ----
+;; 内置 makefile-mode,Makefile 本身不需要缩进转换,确保 Tab 缩进不被替换为空格
+(add-hook 'makefile-mode-hook
+          (lambda ()
+            (setq indent-tabs-mode t)))
+ 
+;;; ---- CMake ----
+(use-package cmake-mode
+  :ensure t
+  :hook (cmake-mode . lsp-deferred))
+ 
+;; CMakeLists.txt / *.cmake 保存时对齐格式(可选,依赖 cmake-format 可执行文件)
+(use-package cmake-font-lock
+  :ensure t
+  :after cmake-mode
+  :hook (cmake-mode . cmake-font-lock-activate))
+
+;;; ---- 语言服务器自检提示 ----
+;; 只是一个方便的辅助命令,启动后检查常用语言服务器 / 工具链是否在 PATH 中,
+;; 缺失时给出提示(不会自动安装,安装方式请参考 README)。
+(defun my/check-lang-tools ()
+  "检查各语言常用语言服务器是否在 PATH 中可用(仅检测,不自动安装)。"
+  (interactive)
+  (let* ((checks '(("rust-analyzer" . "rust-analyzer")
+                    ("gopls" . "gopls")
+                    ("pyright-langserver" . "pyright(可选,pylsp 亦可)")
+                    ("pylsp" . "python-lsp-server(可选)")
+                    ("typescript-language-server" . "typescript-language-server(JS/TS)")
+                    ("intelephense" . "intelephense(PHP,可选,phpactor 亦可)")
+                    ("vscode-html-language-server" . "vscode-langservers-extracted(HTML/CSS)")
+                    ("cmake-language-server" . "cmake-language-server")))
+         (missing (seq-filter
+                   (lambda (c) (not (executable-find (car c))))
+                   checks)))
+    (if missing
+        (message "⚠️ 未在 PATH 中找到:%s"
+                 (mapconcat (lambda (c) (cdr c)) missing ", "))
+      (message "✅ 常用语言工具链均已就绪"))))

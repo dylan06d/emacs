@@ -22,7 +22,6 @@
   (load-file (expand-file-name "langs.el" user-emacs-directory))
   (load-file (expand-file-name "magit.el" user-emacs-directory))
   (load-file (expand-file-name "keybinds.el" user-emacs-directory))
-  (load-file (expand-file-name "early-init.el" user-emacs-directory))
   (mapc #'enable-theme custom-enabled-themes)
   (message "✅ Configuration reloaded!"))
 

@@ -88,16 +88,16 @@
 3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`no-littering`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`nix-mode`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
 
 4. 字体使用 `fantasque-sans`
-debian 使用 `sudo apt install fonts-fantasque-sans` 命令安装,且在 `ui.el`下修改字体为
-``` lisp
-(add-to-list 'default-frame-alist
-              '(font . "Fantasque Sans Mono-16:weight=bold"))
-```
-nixos `nix-shell -p nerd-fonts.fantasque-sans-mono` `nix-shell -p fantasque-sans-mono` ,且在 `ui.el`文件中修改字体为
-```lisp
-(add-to-list 'default-frame-alist
-              '(font . "FantasqueSansM Nerd Font-16:weight=bold"))
-```
+   debian 使用 `sudo apt install fonts-fantasque-sans` 命令安装,且在 `ui.el`下修改字体为
+   ``` lisp
+   (add-to-list 'default-frame-alist
+                 '(font . "Fantasque Sans Mono-16:weight=bold"))
+   ```
+   nixos `nix-shell -p nerd-fonts.fantasque-sans-mono` `nix-shell -p fantasque-sans-mono` ,且在 `ui.el`文件中修改字体为
+   ```lisp
+   (add-to-list 'default-frame-alist
+                 '(font . "FantasqueSansM Nerd Font-16:weight=bold"))
+   ```
 
 ## 目录结构
 

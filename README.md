@@ -26,6 +26,7 @@
   - **Make** —— 内置 `makefile-mode`,保留 Tab 缩进(Makefile 语法要求)
   - **CMake** —— `cmake-language-server`(配合 [cmake-mode](https://github.com/emacs-mirror/cmake-mode) + `cmake-font-lock`)
   - **Nix** —— `nixd`(配合 [nix-mode](https://github.com/NixOS/nix-mode),找不到 `nixd` 时可退回 `nil`/`rnix-lsp`)
+  - **Markdown** —— [markdown-mode](https://github.com/jrblevin/markdown-mode),可选接 `marksman` 语言服务器
   - **Zig** —— `zls`(配合 [zig-mode](https://github.com/ziglang/zig-mode))
 - **主题**:默认加载 [doom-themes](https://github.com/doomemacs/themes) 的 `doom-acario-dark`,配置中也保留了切换到 `zenburn` 的注释示例(可自定义背景色)。
 - **窗口管理**:内置 `winner-mode`,支持撤销/重做窗口布局,以及自定义窗口交换快捷键。
@@ -66,10 +67,11 @@
 | HTML / CSS | `vscode-langservers-extracted` | `npm i -g vscode-langservers-extracted` |
 | CMake | `cmake-language-server` | `pip install cmake-language-server` |
 | Nix | `nixd`(可选 `nil` / `rnix-lsp`) | `nix profile install nixpkgs#nixd` 或按发行版包管理器安装 |
+| Markdown | `marksman`(可选,不装也能正常编辑) | 参考 [marksman 官方文档](https://github.com/artempyanykh/marksman) 下载,确保在 `PATH` 中 |
 | Make | 无(纯语法/缩进支持,不接语言服务器) | —— |
 | Zig | `zls` | 参考 [zls 官方文档](https://github.com/zigtools/zls) 编译或下载,确保在 `PATH` 中 |
 
-安装完成后可执行 `M-x my/check-lang-tools` 快速检查 `rust-analyzer`/`gopls`/`pyright`/`pylsp`/`typescript-language-server`/`intelephense`/`vscode-html-language-server`/`cmake-language-server`/`nixd` 是否已在 `PATH` 中可用(该命令只做检测,不会自动安装)。
+安装完成后可执行 `M-x my/check-lang-tools` 快速检查 `rust-analyzer`/`gopls`/`pyright`/`pylsp`/`typescript-language-server`/`intelephense`/`vscode-html-language-server`/`cmake-language-server`/`nixd`/`marksman` 是否已在 `PATH` 中可用(该命令只做检测,不会自动安装)。
 
 ## 安装
 
@@ -85,7 +87,7 @@
    git clone https://github.com/dylan06d/emacs.git ~/.emacs.d
    ```
 
-3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`no-littering`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`nix-mode`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
+3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`no-littering`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`nix-mode`、`markdown-mode`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
 
 4. 字体使用 `fantasque-sans`
    debian 使用 `sudo apt install fonts-fantasque-sans` 命令安装,且在 `ui.el`下修改字体为
@@ -109,7 +111,7 @@
 ├── code.el        # 编辑基础设置:补全样式、缓存目录、缩进风格、删除行为、行号
 ├── corfu.el       # 补全栈:Corfu / Cape / Vertico / Orderless / Marginalia / Consult
 ├── lspmode.el     # LSP 基础设置:lsp-mode / lsp-ui / flycheck,以及 C/C++、Zig 语言配置
-├── langs.el       # 多语言支持:Rust / Go / Python / Java / JS/TS / PHP / HTML/CSS / Make / CMake / Nix
+├── langs.el       # 多语言支持:Rust / Go / Python / Java / JS/TS / PHP / HTML/CSS / Make / CMake / Nix / Markdown
 ├── magit.el       # Magit(Git 客户端)
 ├── keybinds.el    # 自定义快捷键(含一键重载配置命令)
 └── .gitignore
@@ -141,7 +143,7 @@
 | `C-c h g g` | `consult-ripgrep`(需要安装 `ripgrep`) |
 | `C-c h r` | `consult-recentf`,最近打开的文件 |
 | `C-c C-d` | 可以生成.clangd和.clang-format
-| `M-x my/check-lang-tools` | 检查 Rust / Go / Python 语言服务器是否已在 PATH 中可用
+| `M-x my/check-lang-tools` | 检查各语言常用语言服务器是否已在 PATH 中可用
 
 ## 自定义主题
 
@@ -164,7 +166,7 @@
 
 ## 缓存与自动生成文件
 
-除了本仓库里手写的配置文件(`init.el` / `ui.el` / `code.el` / `corfu.el` / `lspmode.el` / `langs.el` / `magit.el` / `keybinds.el`),其余一切由 Emacs 或插件自动生成的内容都会被统一收纳到:
+除了本仓库里手写的配置文件(`early-init.el` / `init.el` / `ui.el` / `code.el` / `corfu.el` / `lspmode.el` / `langs.el` / `magit.el` / `keybinds.el`),其余一切由 Emacs 或插件自动生成的内容都会被统一收纳到:
 
 ```
 ~/.emacs-bc/
@@ -177,9 +179,18 @@
 - **Emacs 内建自动生成文件**:备份 `~`、自动保存 `#`、锁文件 `.#`、`custom.el`、`recentf`、`savehist`
 - **其余插件产生的缓存/历史文件**:由 [no-littering](https://github.com/emacscollective/no-littering) 统一接管并重定向到同一目录下,例如 `transient`(Magit 的操作历史)、`tramp`、`eshell` 历史、`bookmark`、`url` 缓存等
 
-前两项与 Emacs 内建部分在 `init.el` / `code.el` 中显式设置,其余交由 `no-littering` 自动处理,新增的插件如果也会写缓存文件,一般无需额外配置即可自动落到 `~/.emacs-bc/` 下的对应子目录中。
+前两项与 Emacs 内建部分在 `early-init.el` / `init.el` / `code.el` 中显式设置,其余交由 `no-littering` 自动处理,新增的插件如果也会写缓存文件,一般无需额外配置即可自动落到 `~/.emacs-bc/` 下的对应子目录中。
 
 避免这些文件散落在项目目录或 `~/.emacs.d` 中。
+
+## 其他说明
+
+- **首次启动会比较慢**:第一次打开 Emacs 需要联网从 MELPA 拉取并编译所有包,视网络情况可能需要几分钟;之后都是本地加载,速度会正常很多。
+- **按需精简语言支持**:不需要一次装齐所有语言服务器。缺少对应可执行文件时,`lsp-mode` 只会在打开该语言文件时提示找不到服务器或跳过高级功能(补全、诊断等可能退化为基础功能),不影响其他语言的正常使用。如果确定用不到某个语言,可以直接注释掉 `langs.el` 中对应的 `use-package` 块,减少插件加载数量、加快启动速度。
+- **重载配置**:改动任意 `.el` 文件后不需要重启 Emacs,直接 `C-c r` 即可重新加载全部配置并重新应用主题(定义见 `keybinds.el`)。
+- **`~/.emacs-bc/` 不建议纳入版本管理**:这个目录存放的是包安装结果和各种运行时缓存,体积会持续增长且因机器而异,不建议提交到 Git 仓库或跨机器同步;需要同步的只是 `~/.emacs.d` 下的这些配置文件本身。
+- **PATH 环境变量**:各语言服务器可执行文件需要能被 Emacs 找到,建议装好后在终端用 `which <命令名>` 确认可用,再重启一次 Emacs 验证(尤其是通过图形界面启动器打开 Emacs 时,可能读取的是与终端不同的 PATH)。
+- **性能建议**:部分语言服务器(尤其是 `rust-analyzer`、`gopls`、`jdtls`)在大项目中可能比较吃内存,如果感觉卡顿,可以参考 [lsp-mode 性能调优文档](https://emacs-lsp.github.io/lsp-mode/page/performance/) 按需调整 `gc-cons-threshold`、`read-process-output-max` 等参数。
 
 ## 贡献
 

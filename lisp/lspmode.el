@@ -254,6 +254,12 @@ ColumnLimit: 100
   ;; lsp-mode 默认优先寻找 nixd,找不到会退回 nil / rnix-lsp(需已在 PATH 中)
   (setq lsp-nix-nixd-server-path "nixd"))
 
+;;; ---- Markdown ----
+(use-package markdown-mode
+  :ensure t
+  :mode ("\\.md\\'" . markdown-mode)
+  :hook (markdown-mode . lsp-deferred))
+
 ;;; ---- 语言服务器自检提示 ----
 ;; 只是一个方便的辅助命令,启动后检查常用语言服务器 / 工具链是否在 PATH 中,
 ;; 缺失时给出提示(不会自动安装,安装方式请参考 README)。

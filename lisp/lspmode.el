@@ -246,6 +246,14 @@ ColumnLimit: 100
   :after cmake-mode
   :hook (cmake-mode . cmake-font-lock-activate))
 
+;;; ---- Nix ----
+(use-package nix-mode
+  :ensure t
+  :hook (nix-mode . lsp-deferred)
+  :init
+  ;; lsp-mode 默认优先寻找 nixd,找不到会退回 nil / rnix-lsp(需已在 PATH 中)
+  (setq lsp-nix-nixd-server-path "nixd"))
+
 ;;; ---- 语言服务器自检提示 ----
 ;; 只是一个方便的辅助命令,启动后检查常用语言服务器 / 工具链是否在 PATH 中,
 ;; 缺失时给出提示(不会自动安装,安装方式请参考 README)。

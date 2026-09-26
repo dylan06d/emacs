@@ -25,10 +25,11 @@
   - **HTML / CSS** —— `vscode-html-language-server` / `vscode-css-language-server`(使用内置 `mhtml-mode` / `css-mode`)
   - **Make** —— 内置 `makefile-mode`,保留 Tab 缩进(Makefile 语法要求)
   - **CMake** —— `cmake-language-server`(配合 [cmake-mode](https://github.com/emacs-mirror/cmake-mode) + `cmake-font-lock`)
+  - **Nix** —— `nixd`(配合 [nix-mode](https://github.com/NixOS/nix-mode),找不到 `nixd` 时可退回 `nil`/`rnix-lsp`)
   - **Zig** —— `zls`(配合 [zig-mode](https://github.com/ziglang/zig-mode))
 - **主题**:默认加载 [doom-themes](https://github.com/doomemacs/themes) 的 `doom-acario-dark`,配置中也保留了切换到 `zenburn` 的注释示例(可自定义背景色)。
 - **窗口管理**:内置 `winner-mode`,支持撤销/重做窗口布局,以及自定义窗口交换快捷键。
-- **整洁的缓存目录**:备份文件、自动保存文件、锁文件、`custom.el`、`recentf`、`savehist` 等自动生成文件统一收纳到 `~/.emacs-bc/`,不污染项目和主目录。
+- **整洁的缓存目录**:除本仓库的配置文件外,其余一切自动生成的内容——已安装的 ELPA 包、原生编译缓存(`eln-cache`)、备份文件、自动保存文件、锁文件、`custom.el`、`recentf`、`savehist`,以及 [no-littering](https://github.com/emacscollective/no-littering) 接管的 `transient`(Magit 历史)、`tramp`、`eshell`、`bookmark`、`url` 缓存等——统一收纳到 `~/.emacs-bc/`,不污染 `~/.emacs.d`、项目目录或主目录。
 - **合理的缩进 & 编辑习惯**:默认 4 空格缩进(不使用 Tab),C 系语言使用 BSD/Allman 风格;支持整行/整词的"删除而非剪切"操作。
 - **ANSI 颜色支持**:`compilation` 缓冲区自动解析 ANSI 转义序列。
 - **行号**:全局开启 `display-line-numbers-mode`。
@@ -64,10 +65,11 @@
 | PHP | `intelephense` 或 `phpactor` | `npm i -g intelephense` |
 | HTML / CSS | `vscode-langservers-extracted` | `npm i -g vscode-langservers-extracted` |
 | CMake | `cmake-language-server` | `pip install cmake-language-server` |
+| Nix | `nixd`(可选 `nil` / `rnix-lsp`) | `nix profile install nixpkgs#nixd` 或按发行版包管理器安装 |
 | Make | 无(纯语法/缩进支持,不接语言服务器) | —— |
 | Zig | `zls` | 参考 [zls 官方文档](https://github.com/zigtools/zls) 编译或下载,确保在 `PATH` 中 |
 
-安装完成后可执行 `M-x my/check-lang-tools` 快速检查 `rust-analyzer`/`gopls`/`pyright`/`pylsp`/`typescript-language-server`/`intelephense`/`vscode-html-language-server`/`cmake-language-server` 是否已在 `PATH` 中可用(该命令只做检测,不会自动安装)。
+安装完成后可执行 `M-x my/check-lang-tools` 快速检查 `rust-analyzer`/`gopls`/`pyright`/`pylsp`/`typescript-language-server`/`intelephense`/`vscode-html-language-server`/`cmake-language-server`/`nixd` 是否已在 `PATH` 中可用(该命令只做检测,不会自动安装)。
 
 ## 安装
 
@@ -83,7 +85,7 @@
    git clone https://github.com/dylan06d/emacs.git ~/.emacs.d
    ```
 
-3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
+3. 启动 Emacs,首次启动会自动初始化 `package.el`、拉取 MELPA 源并安装所有缺失的包(`use-package`、`no-littering`、`doom-themes`、`vertico`、`corfu`、`cape`、`orderless`、`marginalia`、`consult`、`lsp-mode`、`lsp-ui`、`flycheck`、`rust-mode`、`cargo`、`go-mode`、`lsp-java`、`typescript-mode`、`php-mode`、`cmake-mode`、`cmake-font-lock`、`nix-mode`、`zig-mode`、`magit` 等),请保持网络畅通,耐心等待安装完成。首次打开 `.java` 文件时,`lsp-java` 还会额外下载 `jdtls`,请保持网络畅通。
 
 4. 字体使用 `fantasque-sans`
 debian 使用 `sudo apt install fonts-fantasque-sans` 命令安装,且在 `ui.el`下修改字体为
@@ -96,22 +98,24 @@ nixos `nix-shell -p nerd-fonts.fantasque-sans-mono` `nix-shell -p fantasque-sans
 (add-to-list 'default-frame-alist
               '(font . "FantasqueSansM Nerd Font-16:weight=bold"))
 ```
+
 ## 目录结构
 
 ```
 .
-├── init.el        # 入口文件:初始化 package.el / use-package,加载 lisp/ 目录下所有配置
+├── early-init.el  # 提前重定向 ELPA 包目录 / 原生编译缓存到 ~/.emacs-bc/(须在 init.el 之前加载)
+├── init.el        # 入口文件:初始化 package.el / use-package / no-littering,加载 lisp/ 目录下所有配置
 ├── ui.el          # UI 设置:关闭菜单栏/工具栏/滚动条、主题、字体、ANSI 颜色
 ├── code.el        # 编辑基础设置:补全样式、缓存目录、缩进风格、删除行为、行号
 ├── corfu.el       # 补全栈:Corfu / Cape / Vertico / Orderless / Marginalia / Consult
 ├── lspmode.el     # LSP 基础设置:lsp-mode / lsp-ui / flycheck,以及 C/C++、Zig 语言配置
-├── langs.el       # 多语言支持:Rust / Go / Python / Java 的 LSP 挂载与工具链
+├── langs.el       # 多语言支持:Rust / Go / Python / Java / JS/TS / PHP / HTML/CSS / Make / CMake / Nix
 ├── magit.el       # Magit(Git 客户端)
 ├── keybinds.el    # 自定义快捷键(含一键重载配置命令)
 └── .gitignore
 ```
 
-> 以上文件默认存放于 `~/.config/emacs/lisp/`,由 `init.el` 中的 `my-load-directory` 自动加载。
+> `early-init.el` 与 `init.el` 需位于 `user-emacs-directory` 根目录下,其余文件默认存放于 `~/.config/emacs/lisp/`,由 `init.el` 中的 `my-load-directory` 自动加载。
 
 ## 常用快捷键
 
@@ -160,11 +164,20 @@ nixos `nix-shell -p nerd-fonts.fantasque-sans-mono` `nix-shell -p fantasque-sans
 
 ## 缓存与自动生成文件
 
-所有 Emacs 自动生成的文件(备份 `~`、自动保存 `#`、锁文件 `.#`、`custom.el`、`recentf`、`savehist`)都会被统一放到:
+除了本仓库里手写的配置文件(`init.el` / `ui.el` / `code.el` / `corfu.el` / `lspmode.el` / `langs.el` / `magit.el` / `keybinds.el`),其余一切由 Emacs 或插件自动生成的内容都会被统一收纳到:
 
 ```
 ~/.emacs-bc/
 ```
+
+具体包括:
+
+- **ELPA 包安装目录**(`package-user-dir`)—— 不再散落到 `~/.emacs.d/elpa`
+- **原生编译缓存**(`eln-cache`,Emacs 28+ 的 native-comp `.eln` 文件)
+- **Emacs 内建自动生成文件**:备份 `~`、自动保存 `#`、锁文件 `.#`、`custom.el`、`recentf`、`savehist`
+- **其余插件产生的缓存/历史文件**:由 [no-littering](https://github.com/emacscollective/no-littering) 统一接管并重定向到同一目录下,例如 `transient`(Magit 的操作历史)、`tramp`、`eshell` 历史、`bookmark`、`url` 缓存等
+
+前两项与 Emacs 内建部分在 `init.el` / `code.el` 中显式设置,其余交由 `no-littering` 自动处理,新增的插件如果也会写缓存文件,一般无需额外配置即可自动落到 `~/.emacs-bc/` 下的对应子目录中。
 
 避免这些文件散落在项目目录或 `~/.emacs.d` 中。
 

@@ -1,14 +1,16 @@
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-
-(unless package-archive-contents
-  (package-refresh-contents))
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/")
+             t)
 
 (unless (package-installed-p 'use-package)
+  (package-refresh-contents)
   (package-install 'use-package))
+
 (require 'use-package)
-(setq use-package-always-ensure t)  ;; 没装的包自动安装
+(setq use-package-always-ensure t)
+
+(setq native-comp-async-report-warnings-errors 'silent)
 
 (defun my-load-directory (dir)
   "加载 DIR 目录下所有未加载的 .el 文件。"

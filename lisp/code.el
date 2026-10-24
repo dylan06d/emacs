@@ -1,18 +1,6 @@
 ;;; ==========================
 ;;; 代码基础设置
 
-;;; 设置搜索有备选
-;; 安装 vertico
-(unless (package-installed-p 'vertico)
-  (package-refresh-contents)
-  (package-install 'vertico))
-
-;; 启用 vertico
-(vertico-mode 1)
-
-;; 让 C-x C-f 和 C-x b 使用 vertico 的增强补全
-(setq completion-styles '(basic partial-completion flex))
-
 ;;; 管理自动生成的文件
 ;; 1. 定义存放目录
 (setq my-emacs-cache-dir (expand-file-name "~/.emacs-bc/"))
@@ -116,4 +104,4 @@
                     (make-string (or tab-width 4) ?\s))))
       (insert indent))))
 (global-set-key (kbd "C-c a") 'my-dedent-line)
-(global-set-key (kbd "C-c e") 'my-force-indent-line)
+(global-set-key (kbd "C-c E") 'my-force-indent-line)

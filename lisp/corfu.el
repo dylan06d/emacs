@@ -38,32 +38,23 @@
  
 (add-hook 'lsp-completion-mode-hook #'my/lsp-capf-setup)
  
-;;; ---- Vertico：minibuffer 候选列表(替代 ido)----
-(use-package vertico
-  :ensure t
-  :init
-  (vertico-mode))
- 
 ;;; ---- Orderless：更智能的模糊匹配 ----
 (use-package orderless
   :ensure t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
- 
-;;; ---- Marginalia：候选项加说明信息 ----
-(use-package marginalia
+
+;;; ---- ido：minibuffer 横向候选----
+(use-package ido-completing-read+
+  :ensure t)
+
+(ido-mode 1)
+(ido-everywhere 1)
+(ido-ubiquitous-mode 1)
+
+;; M-x 也用 ido 风格
+(use-package smex
   :ensure t
-  :init
-  (marginalia-mode))
- 
-;;; ---- Consult：增强查找/切换命令 ----
-(use-package consult
-  :ensure t
-  :bind (("C-c h t" . consult-find)
-         ("C-c h g g" . consult-ripgrep)   ;; 需要 apt install ripgrep
-         ("C-c h r" . consult-recentf)
-         ("C-x b" . consult-buffer)
-         ("M-y" . consult-yank-pop)
-         ("C-s" . consult-line)))
- 
+  :bind (("M-x" . smex)
+         ("C-c C-c M-x" . execute-extended-command)))

@@ -20,7 +20,8 @@
 7. [Emacs 原版常用快捷键](#7-emacs-原版常用快捷键)
 8. [Emacs 特性速览](#8-emacs-特性速览)
 9. [缓存文件位置](#9-缓存文件位置)
-10. [已知问题与修复建议](#10-已知问题与修复建议)
+10. [如何扩展配置](#10-如何扩展配置)
+11. [本次整理的改动清单](#11-本次整理的改动清单)
 
 ---
 
@@ -28,19 +29,21 @@
 
 ```
 ~/.config/emacs/
-├── init.el              # 入口：配置 MELPA、use-package，并加载 lisp/ 下所有 .el
+├── init.el                  # 入口：模块清单 + 加载函数 + 重载函数
 └── lisp/
-    ├── code.el          # 缓存目录、缩进、删除行为、行号
-    ├── corfu.el         # 补全：Corfu / Cape / Orderless / ido / smex
-    ├── keybinds.el      # 通用快捷键
-    ├── langs.el         # 语言配置（目前只有 Python）
-    ├── lspmode.el       # lsp-mode / lsp-ui / flycheck（C、C++）
-    ├── magit.el         # Git 界面
-    └── ui.el            # 界面、字体、主题
+    ├── init-packages.el     # MELPA、use-package
+    ├── init-core.el         # 缓存目录、备份、自动保存、savehist、recentf
+    ├── init-editing.el      # 缩进、C 风格、删除行为、行号、编辑类命令
+    ├── init-ui.el           # 界面、字体、主题
+    ├── init-completion.el   # Corfu / Cape / Orderless / ido / smex
+    ├── init-lsp.el          # lsp-mode / lsp-ui / flycheck（C、C++）
+    ├── init-langs.el        # 语言配置（目前只有 Python）
+    ├── init-keys.el         # 通用快捷键：窗口、编译、撤销、which-key
+    └── init-git.el          # Magit
 ```
 
-`init.el` 会按**文件名字母顺序**加载 `lisp/` 下所有 `.el`：
-`code → corfu → keybinds → langs → lspmode → magit → ui`。
+加载顺序由 `init.el` 里的 `my/modules` 列表决定（**不再依赖文件名字母顺序**）。
+所有模块统一命名为 `init-*.el`，避免与第三方包同名（例如 `lisp/corfu.el` 会盖住真正的 `corfu` 包）。
 
 > **注意**：如果家目录里已经有 `~/.emacs.d` 或 `~/.emacs`，Emacs 会优先使用它们，`~/.config/emacs` 不会生效。
 > 先备份：`mv ~/.emacs.d ~/.emacs.d.bak`
@@ -53,14 +56,14 @@
 
 | 类别 | 内容 | 用途 |
 |---|---|---|
-| Emacs | **29 或更高** | 配置用到 `undo-redo`、`alpha-background`、内置 `use-package` 等 |
+| Emacs | **29 或更高** | 用到 `undo-redo`、`alpha-background`、内置 `use-package` 等 |
 | Git | git | Magit |
 | C/C++ | gcc、make、clangd、clang-format | 编译（`C-!`）、LSP、格式化 |
 | Python | python3、pipx、**pyright** | Python LSP 补全 |
-| 字体 | FantasqueSansM Nerd Font | `ui.el` 里指定的字体 |
+| 字体 | FantasqueSansM Nerd Font | `init-ui.el` 里指定的字体 |
 | 可选 | bear、ripgrep | 给 clangd 生成 `compile_commands.json`、更快的项目内搜索 |
 
-Emacs 内部的包（doom-themes、corfu、cape、orderless、ido-completing-read+、smex、lsp-mode、lsp-ui、flycheck、flycheck-pos-tip、magit、move-text、pyvenv、lsp-pyright）**首次启动时会自动从 MELPA 下载**，不用手动装，但需要联网。
+Emacs 内部的包（doom-themes、corfu、cape、orderless、ido-completing-read+、smex、lsp-mode、lsp-ui、flycheck、magit、move-text、pyvenv、lsp-pyright、which-key）**首次启动时会自动从 MELPA / GNU ELPA 下载**，需要联网。
 
 ### 2.2 Ubuntu
 
@@ -107,8 +110,6 @@ pipx install pyright
 
 ### 2.5 安装字体（Ubuntu / Fedora）
 
-`ui.el` 使用 `FantasqueSansM Nerd Font`，系统仓库一般没有，手动安装：
-
 ```bash
 mkdir -p ~/.local/share/fonts
 cd /tmp
@@ -120,11 +121,9 @@ fc-cache -fv
 fc-list | grep -i "FantasqueSansM Nerd Font"
 ```
 
-字体没装好时 Emacs **不会报错**，只是悄悄用默认字体。想换字体就改 `ui.el` 里的 `"FantasqueSansM Nerd Font-16"`（`-16` 是字号）。
+字体没装好时 Emacs **不会报错**，只是悄悄用默认字体。想换字体就改 `init-ui.el` 里的变量 `my/font`（`-16` 是字号）。
 
 ### 2.6 备选：用 npm 安装 pyright
-
-不想用 pipx 时：
 
 ```bash
 # Ubuntu: sudo apt install nodejs npm
@@ -136,12 +135,9 @@ npm install -g pyright --prefix ~/.local
 ### 2.7 放置配置文件
 
 ```bash
-mkdir -p ~/.config/emacs/lisp
-cp init.el ~/.config/emacs/
-cp code.el corfu.el keybinds.el langs.el lspmode.el magit.el ui.el ~/.config/emacs/lisp/
+mkdir -p ~/.config/emacs
+cp -r init.el lisp ~/.config/emacs/
 ```
-
-文件名里如果带 `_1` 之类的后缀（如 `code_1.el`），复制时去掉，保持为 `code.el`、`corfu.el`、`lspmode.el`。
 
 ### 2.8 首次启动
 
@@ -151,7 +147,8 @@ emacs
 
 - 第一次会下载十几个包，等待一会儿，期间可能出现编译警告（原生编译的警告已被静默）。
 - 如果出现 `Package ... is unavailable` 之类的错误：`M-x package-refresh-contents`，然后**重启 Emacs**。
-- 启动后会停在 `*scratch*` 缓冲区。
+- 某个模块加载失败时，Emacs 会弹出 `*Warnings*` 说明是哪个模块、什么错误，其它模块照常加载。
+- 不带文件启动时停在 `*scratch*` 缓冲区；`emacs foo.c` 则直接打开 `foo.c`。
 
 ### 2.9 验证
 
@@ -174,8 +171,6 @@ git --version
 
 ### 2.10 C/C++ 项目需要 `compile_commands.json`
 
-clangd 靠它知道头文件路径和编译参数：
-
 ```bash
 # Makefile 项目
 bear -- make
@@ -191,14 +186,16 @@ ln -s build/compile_commands.json .
 
 | 文件 | 内容 |
 |---|---|
-| `init.el` | 添加 MELPA 源；没有 `use-package` 就安装；`use-package-always-ensure t`（所有 `use-package` 自动装包）；静默原生编译警告；加载 `lisp/` 下所有文件 |
-| `code.el` | 备份/自动保存/`custom.el`/`savehist` 都放到 `~/.emacs-bc/`；禁用锁文件；缩进 4 空格；C/C++ 使用 Allman（bsd）风格；选区后输入会替换选区；删除类命令不进 kill ring；全局行号 |
-| `corfu.el` | Corfu 弹窗补全（自动触发）；Cape 补充来源；Orderless 匹配（仅影响 Corfu）；**ido + ido-everywhere + ido-ubiquitous**；**smex** 接管 `M-x` |
-| `keybinds.el` | 编译、撤销/重做、窗口操作、移动文本、开新行等快捷键 |
-| `langs.el` | Python：4 空格缩进、`python3`、pyvenv 虚拟环境、lsp-pyright |
-| `lspmode.el` | lsp-mode（C/C++ 自动启动）、lsp-ui 侧边提示、flycheck 诊断；clangd 参数 `--header-insertion=never --background-index` |
-| `magit.el` | Magit，状态页占满整个窗口 |
-| `ui.el` | 关闭菜单栏/工具栏/滚动条；关闭启动画面；字体；主题 `doom-acario-dark`；编译缓冲区显示颜色 |
+| `init.el` | 静默原生编译警告；把 `lisp/` 加入 `load-path`；`my/modules` 模块清单；`my/load-modules`（出错只告警）；`my/reload-config` |
+| `init-packages.el` | 添加 MELPA；首次启动刷新索引；`use-package` 就绪；`use-package-always-ensure t`（内置库要写 `:ensure nil`） |
+| `init-core.el` | 备份/自动保存/`custom.el`/`savehist`/`recentf` 都放到 `~/.emacs-bc/`；禁用锁文件；提供 `my/cache-file` 给其它模块用 |
+| `init-editing.el` | 缩进 4 空格；C/C++ 使用 Allman（自定义 `my-allman`，bsd 基础上固定 4 空格）；选区后输入会替换选区；删除类命令不进 kill ring；行号；缩进/反缩进；开新行；移动文本；`C-a`、`C-n`；Makefile 使用真 Tab |
+| `init-ui.el` | 关闭菜单栏/工具栏/滚动条；关闭启动画面；字体（`my/font`）；透明度（`my/alpha-background`）；主题 `doom-acario-dark`；编译缓冲区显示颜色 |
+| `init-completion.el` | Corfu 弹窗补全（自动触发）；Cape 补充来源；Orderless 匹配；**ido + ido-everywhere + ido-ubiquitous**；**smex** 接管 `M-x` |
+| `init-lsp.el` | lsp-mode（C/C++ 自动启动，命令前缀 `C-c l`）、lsp-ui 侧边提示、flycheck 诊断；clangd 参数 `--header-insertion=never --background-index` |
+| `init-langs.el` | Python：4 空格缩进、`python3`、pyvenv 虚拟环境、lsp-pyright（切换虚拟环境后自动重启 LSP） |
+| `init-keys.el` | 编译、撤销/重做、关闭其它缓冲区、窗口布局撤销、窗口跳转/交换、重载配置、which-key |
+| `init-git.el` | Magit，状态页占满整个窗口 |
 
 ---
 
@@ -245,40 +242,41 @@ ln -s build/compile_commands.json .
 
 | 键 | 作用 |
 |---|---|
-| `C-c <left/right/up/down>` | 光标跳到左/右/上/下方的窗口 |
-| `C-c w <left/right/up/down>` | 和左/右/上/下方的窗口**交换内容** |
+| `C-c C-<left/right/up/down>` | 光标跳到左/右/上/下方的窗口 |
+| `C-c M-<left/right/up/down>` | 和左/右/上/下方的窗口**交换内容** |
 | `C-c c` | 撤销窗口布局变化（winner-undo） |
 | `C-c v` | 重做窗口布局变化（winner-redo） |
 | `C-c k` | 关闭除当前缓冲区外的所有缓冲区 |
+| `C-c r` | 重载全部配置 |
 
 ### 4.5 LSP / 诊断
 
 | 键 | 作用 |
 |---|---|
 | `C-c e` | 列出当前缓冲区所有错误（flycheck-list-errors） |
-| `M-n` / `M-p` | 跳到下一个/上一个错误 |
+| `M-n` / `M-p` | 跳到下一个/上一个错误（**仅在 flycheck 缓冲区内**，不影响 minibuffer、Magit 等） |
 | `C-c ! n` / `C-c ! p` / `C-c ! l` | flycheck 原生键：下一个/上一个/列表 |
-| `M-.` | 跳转到定义（LSP 提供） |
-| `M-,` | 跳回跳转前的位置 |
-| `M-?` | 查找引用 |
-| `C-c l r` | 重启 LSP（见第 10 节，**当前绑定有问题**） |
+| `M-.` / `M-,` / `M-?` | 跳转到定义 / 跳回 / 查找引用（xref，LSP 提供） |
+| `C-c l` | **LSP 命令前缀**，按下后 which-key 会列出所有后续键 |
 
-其它 LSP 功能直接用 `M-x`：
+`C-c l` 下最常用的：
 
-- `lsp-rename`：重命名符号
-- `lsp-execute-code-action`：代码操作 / 快速修复
-- `lsp-format-buffer`：格式化整个缓冲区
-- `lsp-describe-thing-at-point`：查看光标处文档
-- `lsp-restart-workspace`：重启语言服务器
-- `lsp-describe-session`：查看当前 LSP 会话状态
+| 键 | 作用 |
+|---|---|
+| `C-c l r r` | 重命名符号（`lsp-rename`） |
+| `C-c l a a` | 代码操作 / 快速修复 |
+| `C-c l = =` | 格式化整个缓冲区 |
+| `C-c l h h` | 查看光标处文档 |
+| `C-c l w r` | 重启当前 LSP 服务器（`lsp-workspace-restart`） |
+| `C-c l w d` | 查看当前 LSP 会话状态 |
 
-lsp-mode 默认的快捷键前缀是 `s-l`（Super+l），多数桌面环境会占用 Super，建议用上面的 `M-x` 命令。
+> lsp-mode 默认前缀是 `s-l`（Super+l），容易被桌面环境占用，所以改成了 `C-c l`（`init-lsp.el` 里 `lsp-keymap-prefix`）。
 
 ### 4.6 Python 专用（仅在 Python 缓冲区）
 
 | 键 | 作用 |
 |---|---|
-| `C-c C-p` | 启动 Python 交互环境（`run-python`） |
+| `C-c C-p` | 启动 Python 交互环境（`run-python`，原版） |
 | `C-c C-v` | 选择并激活虚拟环境（`pyvenv-activate`），之后自动重启 LSP |
 | `C-c C-z` | 切换到 Python 交互窗口（原版） |
 | `C-c C-c` | 把整个缓冲区发给交互环境（原版） |
@@ -286,7 +284,7 @@ lsp-mode 默认的快捷键前缀是 `s-l`（Super+l），多数桌面环境会�
 | `C-c C-l` | 加载当前文件到交互环境（原版） |
 | `C-c <` / `C-c >` | 选区左移/右移一级缩进（原版） |
 
-> 原版 `C-c C-v`（`python-check`）已被覆盖。
+> 原版 `C-c C-v`（`python-check`）已被覆盖，需要时 `M-x python-check`。
 
 虚拟环境用法：项目里 `python3 -m venv .venv` → 打开 `.py` 文件 → `C-c C-v` → 选择 `.venv` 目录。
 
@@ -317,17 +315,9 @@ lsp-mode 默认的快捷键前缀是 `s-l`（Super+l），多数桌面环境会�
 | `?` | 帮助菜单 |
 | `q` | 退出，恢复原窗口布局 |
 
-### 4.8 重载配置
-
-| 键 | 作用 |
-|---|---|
-| `C-c r` | 重载配置（见第 10 节，**当前实现有问题**） |
-
 ---
 
 ## 5. 被本配置覆盖的原版键位
-
-下面这些键的原版功能被改掉了，对应的找回方式：
 
 | 键 | 原版功能 | 现在 | 怎么用回原版 |
 |---|---|---|---|
@@ -335,14 +325,16 @@ lsp-mode 默认的快捷键前缀是 `s-l`（Super+l），多数桌面环境会�
 | `C-a` | 行首 | 行首第一个非空白字符 | `Home` 键 |
 | `C-z` | 挂起 Emacs | 撤销 | `C-x C-z`（图形界面下用不上） |
 | `C-/` | 撤销 | 重做 | `C-_` 或 `C-x u` 撤销 |
-| `M-d` | 向后剪切一个词 | 向后删除一个词 | 无（想要剪切就用 `M-DEL` 的反向版本，或先选区再 `C-w`） |
+| `M-d` | 向后剪切一个词 | 向后删除一个词 | 先选区再 `C-w` |
 | `C-<backspace>` | 向前剪切一个词 | 向前删除一个词 | `M-DEL` 仍是向前剪切一个词 |
 | `C-S-<backspace>` | 剪切整行 | 删除整行 | `C-a C-k C-k` |
-| `M-n` / `M-p` | 无全局绑定 | 下/上一个错误 | minibuffer 里仍是历史记录 |
+| `M-n` / `M-p` | 无全局绑定 | 下/上一个错误（仅 flycheck 缓冲区） | 其它缓冲区、minibuffer 里不受影响 |
 | `C-@` | 设置标记（终端里） | `async-shell-command` | 图形界面用 `C-SPC` 设标记 |
 | `C-c C-v`（Python） | `python-check` | `pyvenv-activate` | `M-x python-check` |
+| `C-c <left>` / `C-c <right>` | winner-undo / redo | 不再绑定 | 用 `C-c c` / `C-c v` |
+| `C-c l ...` | 无 | LSP 命令前缀 | — |
 
-**终端版 Emacs（`emacs -nw`）**里，`C-!`、`C-<return>`、`C-S-<return>`、`C-S-<backspace>` 这类组合键终端不会传给 Emacs，**无法使用**；`C-@` 会占用 `C-SPC`。本配置按图形界面使用设计。
+**终端版 Emacs（`emacs -nw`）**里，`C-!`、`C-<return>`、`C-S-<return>`、`C-S-<backspace>`、`C-c C-<方向键>` 这类组合键终端不会传给 Emacs，**无法使用**；`C-@` 会占用 `C-SPC`。本配置按图形界面使用设计。
 
 ---
 
@@ -381,22 +373,21 @@ lsp-mode 默认的快捷键前缀是 `s-l`（Super+l），多数桌面环境会�
 ### 6.2 smex（`M-x`）
 
 - 输入命令名片段过滤，`C-s` / `C-r` 切换候选，`RET` 执行。
-- 最近、最常用的命令排在最前。
+- 最近、最常用的命令排在最前（记录保存在 `~/.emacs-bc/smex-items`）。
 - `C-h f` 在候选上查看该命令的文档。
 - smex 多年未更新但仍可用；它的兼容分支 `amx` 有人维护，可以直接替换。
 
 ### 6.3 Corfu 弹窗（写代码时）
 
 - 输入 **1 个字符、停顿 0.1 秒**后自动弹出。
-- `↑` / `↓`：在候选中移动（到头会循环）。
-- `TAB`：补全；`RET`：插入选中的候选（没选中时就是换行）。
+- `TAB` / `S-TAB`：在候选中向下/向上移动（到头会循环）；`↑` / `↓` 同理。
+- `RET`：插入选中的候选（没选中时就是换行）。
 - `C-g` 或 `ESC`：关闭弹窗。
 - `C-M-i`（或 `M-TAB`）：手动触发补全。
-- 因为 `C-n` 被改成了 `dabbrev-expand`，**不能**再用 `C-n` 在弹窗里下移，请用方向键。
+- 因为 `C-n` 被改成了 `dabbrev-expand`，**不能**再用 `C-n` 在弹窗里下移，请用 `TAB` 或方向键。
 - 候选来源：
-  - C/C++/Python：`dabbrev`（缓冲区里已有的词，排前）+ LSP（clangd / pyright）
+  - LSP 缓冲区（C / C++ / Python）：`dabbrev`（缓冲区里已有的词，排前）+ LSP（clangd / pyright）+ 文件路径
   - 其它缓冲区：文件路径（Cape file）+ 语言关键字（Cape keyword）
-  - Python 缓冲区额外有文件路径补全（写 `open("./...")` 时有用）
 - Orderless 让弹窗支持**空格分隔的多个片段**，顺序无关：输入 `get val` 能匹配 `get_value`、`value_get`。
 - `corfu-history` 记住你的选择，常用项下次排得更前（保存在 `savehist`）。
 
@@ -608,7 +599,7 @@ Emacs 把"剪切"叫 kill，"粘贴"叫 yank。被剪切的内容放进 **kill r
 | `C-h e` | 打开 `*Messages*` 缓冲区 |
 | `C-h i` | Info 手册阅读器 |
 | `C-h r` | Emacs 官方手册 |
-| `C-x` 之后按 `C-h` | 列出 `C-x` 开头的所有键（任何前缀都可以这样用） |
+| 前缀键之后按 `C-h` | 列出该前缀下所有键（本配置已装 which-key，停顿片刻会自动弹出） |
 
 ### 7.13 求值 Emacs Lisp
 
@@ -664,72 +655,94 @@ emacsclient -c          # 连接并新开窗口
 
 ## 9. 缓存文件位置
 
-`code.el` 把 Emacs 自动生成的文件集中放到 **`~/.emacs-bc/`**：
+`init-core.el` 把 Emacs 自动生成的文件集中放到 **`~/.emacs-bc/`**：
 
 | 文件 | 内容 |
 |---|---|
 | `文件名~` | 备份文件（用复制方式备份） |
-| `#文件名#` | 自动保存文件 |
+| `#文件名#`、`auto-save-list/` | 自动保存文件及会话列表 |
 | `custom.el` | Customize 界面产生的设置 |
 | `savehist` | minibuffer 历史、Corfu 使用历史 |
+| `recentf` | 最近打开的文件 |
+| `ido.last` | ido 访问过的目录 |
+| `smex-items` | smex 命令使用频率 |
 
 锁文件（`.#xxx`）已被禁用。
+在自己的模块里存数据文件时，用 `(my/cache-file "名字")` 即可放进同一目录。
 
 ---
 
-## 10. 已知问题与修复建议
+## 10. 如何扩展配置
 
-以下是根据上传的配置文件检查出来的问题，建议修复：
+### 10.1 新增一个模块
 
-### 10.1 `C-c r` 重载配置会出错
+1. 新建 `lisp/init-xxx.el`，文件头 `;;; init-xxx.el --- 说明 -*- lexical-binding: t; -*-`，末尾 `(provide 'init-xxx)`。
+2. 在 `init.el` 的 `my/modules` 列表里加上 `init-xxx`（位置即加载顺序）。
+3. `C-c r` 重载，或重启 Emacs。
 
-`keybinds.el` 中的 `my-reload-config` 从 `user-emacs-directory` 直接加载 `ui.el`、`code.el` 等文件，但这些文件实际在 `lisp/` 子目录里；它还试图加载不存在的 `early-init.el`。
+### 10.2 新增一个包
 
-**修复**：把整个函数换成：
-
-```elisp
-(defun my-reload-config ()
-  "Reload init.el (which loads every file in lisp/)."
-  (interactive)
-  (load-file (expand-file-name "init.el" user-emacs-directory))
-  (mapc #'enable-theme custom-enabled-themes)
-  (message "✅ Configuration reloaded!"))
-```
-
-### 10.2 `C-c l r` 绑定了一个不是命令的符号
-
-`keybinds.el` 里：
+在对应模块里写 `use-package`（默认自动安装；内置库加 `:ensure nil`）：
 
 ```elisp
-(global-set-key (kbd "C-c l r") 'lsp-restart)
+(use-package rg
+  :bind ("C-c s" . rg-menu))
 ```
 
-在 lsp-mode 中，`lsp-restart` 是一个**变量**（控制服务器退出后的处理方式），不是命令，按键会报错。重启服务器的命令是 `lsp-restart-workspace`。
+### 10.3 新增一门语言
 
-**修复**：
+在 `init-langs.el` 末尾加一个小节，照 Python 的写法：写一个 `my/xxx-lsp-start`，`:hook` 到对应主模式，`lsp-deferred` 即可。C/C++ 是在 `init-lsp.el` 里直接 `:hook`。
 
-```elisp
-(global-set-key (kbd "C-c l r") 'lsp-restart-workspace)
-```
+### 10.4 约定
 
-### 10.3 Makefile 里 Tab 可能被换成空格
+- **和某个功能强相关的键绑定，放在该功能所在的模块里**；与功能无关的通用键放 `init-keys.el`。
+- 自己写的函数、变量统一用 `my/` 前缀。
+- hook 里用具名函数而不是 `lambda`，重载配置时不会重复挂钩。
+- 想改字体、透明度：改 `init-ui.el` 里的 `my/font`、`my/alpha-background`。
 
-`code.el` 全局设置了 `indent-tabs-mode nil`。之前的配置里有一个给 Makefile 恢复 Tab 的 hook，现在被删掉了。Makefile 的命令行必须以真正的 Tab 开头，否则 `make` 报 `missing separator`。
+### 10.5 可选的小改进
 
-**修复**：在 `langs.el` 或 `code.el` 中加：
+- **想让 `C-n` 恢复为下一行**：把 `init-editing.el` 里 `(global-set-key (kbd "C-n") #'dabbrev-expand)` 改成 `(global-set-key (kbd "C-;") #'dabbrev-expand)`。
+- **想让 ido 支持模糊匹配**：在 `init-completion.el` 的 ido 小节里加 `(setq ido-enable-flex-matching t)`。
 
-```elisp
-(add-hook 'makefile-mode-hook (lambda () (setq indent-tabs-mode t)))
-```
+---
 
-不加的话，遇到问题时用 `C-q TAB` 输入真正的 Tab。
+## 11. 本次整理的改动清单
 
-### 10.4 一些可选的小改进
+**结构**
+- 单个长文件拆成 `init-*.el` 模块，`init.el` 用显式清单加载，某个模块出错不会拖垮其它模块。
+- 模块改名为 `init-*`：原来的 `corfu.el` 放进 `load-path` 后会**盖住真正的 corfu 包**。
+- `init.el` 里的 `(add-to-list 'load-path "./lisp/")` 是相对路径，改成基于 `user-emacs-directory`；去掉在 corfu 安装之前就 `(require 'corfu)` 的写法。
+- 包管理只在 `init-packages.el` 配一次（`ui.el` 里原来重复配了一遍 MELPA 和 `package-initialize`）；去掉没有用到的 `better-defaults`。
 
-- **`C-n` 被占用后想保留下移**：把 `dabbrev-expand` 换到另一个键，例如在 `keybinds.el` 里把 `(global-set-key (kbd "C-n") 'dabbrev-expand)` 改成 `(global-set-key (kbd "C-;") 'dabbrev-expand)`，这样 `C-n` 恢复为下一行（原版 `M-/` 本来也可用）。
-- **按了前缀键想看后面有哪些键**：Emacs 30 起内置 `which-key`，加 `(which-key-mode 1)` 即可。
-- **错误提示重复**：`lsp-ui-sideline` 和 `flycheck-pos-tip` 会同时显示同一处错误。觉得吵就删掉 `flycheck-pos-tip` 那一段。
-- **`lspmode.el` 里的 `lsp-zig-zls-executable`**：zig 的配置已经不在了，这行可以删掉，留着也无害。
+**修复的问题**
+- `C-c r` 重载：原来从根目录加载 `lisp/` 下的文件，并去加载不存在的 `early-init.el`；而且 `require` 不会重复加载。现在统一由 `my/reload-config` 重新 `load` 全部模块。
+- `C-c l r` 原来绑的 `lsp-restart` 是变量不是命令；现在 LSP 前缀改为 `C-c l`，重启用 `C-c l w r`。
+- C/C++ 缩进：内置 `bsd` 风格的 `c-basic-offset` 是 **8**，会盖掉 `setq-default c-basic-offset 4`；现在基于 bsd 派生 `my-allman`，固定 4 空格。
+- `C-!` 编译：`compile` 还没加载时 `let` 绑定的 `compile-command` 不是动态绑定，会失效；现在先 `(require 'compile)`。
+- `C-c M-<方向键>` 窗口交换改用内置的 `windmove-swap-states-*`，去掉自写函数；去掉 `winner-mode` 默认占用的 `C-c <left>/<right>`。
+- `M-n` / `M-p` 原来是全局绑定，现在只绑在 `flycheck-mode-map`，不影响其它模式。
+- 启动时强制 `switch-to-buffer "*scratch*"` 会盖住 `emacs foo.c` 打开的文件，已去掉。
+- `init-ui.el` 里的误导性注释（"关闭 scratch 改动提示"）和重复的 `inhibit-startup-message` 已清理。
+- 选区后输入替换选区：原来只设了 `delete-active-region`（那是 `DEL` 删选区），现在启用 `delete-selection-mode`。
+- 反缩进函数 `my-dedent-line` 重写，逻辑更简单。
+- `C-S-<return>` 开新行不再留下行尾空白。
+- 恢复了 Makefile 使用真 Tab 的 hook（全局 `indent-tabs-mode nil` 会让 `make` 报 `missing separator`）。
+
+**去重 / 清理**
+- 去掉 `flycheck-pos-tip`（与 `lsp-ui-sideline` 重复显示同一错误）。
+- 去掉 `lsp-zig-zls-executable`（zig 已不在配置里）。
+- 去掉被注释掉的 zenburn 主题、重复的 `set-frame-parameter alpha-background`、冗余的 `tab-stop-list`。
+- `recentf-save-file` 原来设了但没启用 `recentf-mode`，现在启用。
+- ido / smex / auto-save-list 的数据文件也放进 `~/.emacs-bc/`。
+
+**新增**
+- `lsp-keymap-prefix "C-c l"` + `which-key`（按前缀键后自动提示后续键）。
+- Corfu 的 `TAB` / `S-TAB` 显式绑定为下一个/上一个候选。
+- LSP 缓冲区补全增加文件路径来源。
+- 切换 Python 虚拟环境后自动重启 LSP。
+
+> `langs.el` 没有包含在你发来的文件里，`init-langs.el` 是按原 README 的描述（4 空格、`python3`、pyvenv、lsp-pyright、`C-c C-v`）重新写的，请对照你原来的文件确认。
 
 ---
 
@@ -750,10 +763,11 @@ emacsclient -c          # 连接并新开窗口
 | 注释 | `M-;` |
 | 上下移动行 | `M-<up>` / `M-<down>` |
 | 分屏 / 切换窗口 | `C-x 2` `C-x 3` / `C-x o` |
-| 窗口之间跳转 | `C-c <方向键>` |
+| 窗口之间跳转 | `C-c C-<方向键>` |
 | 项目内找文件 | `C-x p f` |
 | Git | `C-x g` |
 | 激活 Python 虚拟环境 | `C-c C-v` |
+| LSP 命令（重命名等） | `C-c l ...` |
 | 取消 | `C-g` |
 | 查看某个键做什么 | `C-h k` |
 | 退出 | `C-x C-c` |
